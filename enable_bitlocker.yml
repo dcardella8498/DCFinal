@@ -1,0 +1,24 @@
+---
+- name: Enable BitLocker on Windows
+  hosts: windowshosts
+  gather_facts: true
+  tasks:
+    - name: Enable bitlocker and securely store the recovery key
+      ansible.builtin.win_shell: |
+        $driveLetter = "C:"
+        $recoveryKeyPath = "C:\BitLocker_Recovery_Keys"
+        $securePath = "C:\Secure_Storage"
+
+        # Enable BitLocker on the drive
+        Enable-BitLocker -MountPoint $driveLetter -RecoveryKeyPath $recoveryKeyPath -RecoveryKeyProtector
+
+        # Securely store the recovery key
+        (Get-BitlockerVolume -MountPoint C).KeyProtector
+      
+
+  handlers:
+    - name: Reboot if required
+      win_reboot:
+        reboot_timeout: 600
+        post_reboot_delay: 30
+      ignore_errors: true

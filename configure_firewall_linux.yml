@@ -1,0 +1,21 @@
+---
+- name: Configure Firewall on Linux
+  hosts: cislinuxserver
+  become: yes
+  tasks:
+    - name: Allow incoming traffic on port 80
+      firewalld:
+        service: http
+        state: enabled
+        immediate: yes
+
+    - name: Allow incoming traffic on port 443
+      firewalld:
+        service: https
+        state: enabled
+        immediate: yes
+
+    - name: Restart the firewall service
+      service:
+        name: firewalld
+        state: restarted

@@ -1,0 +1,32 @@
+---
+- name: Install and Configure FreeRADIUS
+  hosts: cislinuxserver
+  become: yes
+  tasks:
+    - name: Install FreeRADIUS
+      package:
+        name: freeradius
+        state: present
+
+    - name: Create FreeRADIUS configuration directory
+      file:
+        path: /etc/freeradius
+        state: directory
+
+    - name: Configure FreeRADIUS clients
+      template:
+        src: clients.conf.j2
+        dest: /etc/freeradius/clients.conf
+      notify: Restart FreeRADIUS
+
+    - name: Start and enable FreeRADIUS service
+      service:
+        name: radiusd
+        state: started
+        enabled: yes
+
+  handlers:
+    - name: Restart FreeRADIUS
+      service:
+        name: freeradius
+        state: restarted

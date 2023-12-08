@@ -1,0 +1,47 @@
+---
+- name: Install and Configure Email Server
+  hosts: cislinuxserver
+  become: yes
+  tasks:
+    - name: Install Postfix
+      package:
+        name: postfix
+        state: present
+
+    - name: Start and enable Postfix service
+      service:
+        name: postfix
+        state: started
+        enabled: yes
+
+    - name: Configure main.cf for Postfix
+      lineinfile:
+        path: /etc/postfix/main.cf
+        line: "{{ item }}"
+        state: present
+      with_items:
+        - "myhostname = mail.example.com"
+        - "mydomain = example.com"
+        - "myorigin = $mydomain"
+        - "inet_interfaces = all"
+        - "inet_protocols = all"
+        - "mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain"
+        - "mynetworks = 127.0.0.0/8"
+        - "home_mailbox = Maildir/"
+        - "mailbox_command = "
+      notify: Restart Postfix
+
+    - name: Create user accounts for email
+      user:
+        name: "{{ item }}"
+        state: present
+        createhome: yes
+      with_items:
+        - user1
+        - user2
+
+  handlers:
+    - name: Restart Postfix
+      service:
+        name: postfix
+        state: restarted

@@ -1,0 +1,63 @@
+---
+- name: Install and Configure Nginx
+  hosts: cislinuxserver
+  become: yes
+  tasks:
+    - name: Install Nginx package
+      package:
+        name: nginx
+        state: present
+
+    - name: Ensure Nginx configuration directory exists
+      file:
+        path: /etc/nginx/sites-available
+        state: directory
+
+    - name: Configure Nginx for ports 80 and 443
+      blockinfile:
+        path: /etc/nginx/sites-available/default
+        create: yes
+        block: |
+          server {
+            listen 80;
+            server_name localhost;
+            root /usr/share/nginx/html;
+            index index.html;
+          }
+
+          server {
+            listen 443 ssl;
+            server_name localhost;
+            root /usr/share/nginx/html;
+            index index.html;
+            ssl_certificate /etc/nginx/ssl/nginx.crt;
+            ssl_certificate_key /etc/nginx/ssl/nginx.key;
+          }
+
+      notify: Restart Nginx
+
+    - name: Ensure Nginx sites-enabled directory exists
+      file:
+        path: /etc/nginx/sites-enabled
+        state: directory
+        recurse: yes
+
+    - name: Create symbolic link to enable the configuration
+      file:
+        src: /etc/nginx/sites-available/default
+        dest: /etc/nginx/sites-enabled/default
+        state: link
+
+    - name: Create SSL directory
+      file:
+        path: /etc/nginx/ssl
+        state: directory
+
+    - name: Generate self-signed SSL certificate
+      command: "openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/nginx/ssl/nginx.key -out /etc/nginx/ssl/nginx.crt -subj '/CN=localhost'"
+
+  handlers:
+    - name: Restart Nginx
+      service:
+        name: nginx
+        state: restarted

@@ -1,0 +1,34 @@
+---
+- name: System Monitoring on Windows
+  hosts: windowshosts
+  gather_facts: true
+  tasks:
+    - name: Collect CPU Utilization
+      win_shell: |
+        $cpuUsage = (Get-Counter '\Processor(_Total)\% Processor Time' -SampleInterval 2 -MaxSamples 2 | Select-Object -ExpandProperty CounterSamples | Measure-Object -Property CookedValue -Average).Average
+        Write-Output "CPU Utilization: $cpuUsage%"
+      register: cpu_result
+
+    - name: Display CPU Utilization
+      debug:
+        msg: "{{ cpu_result.stdout_lines | first }}"
+
+    - name: Collect RAM Utilization
+      win_shell: |
+        $ramFree = (Get-Counter '\Memory\Available MBytes' -SampleInterval 2 -MaxSamples 2 | Select-Object -ExpandProperty CounterSamples | Measure-Object -Property CookedValue -Average).Average
+        Write-Output "RAM Utilization: Available $ramFree MB"
+      register: ram_result
+
+    - name: Display RAM Utilization
+      debug:
+        msg: "{{ ram_result.stdout_lines | first }}"
+
+    - name: Collect Disk Utilization
+      win_shell: |
+        $diskFree = (Get-Counter '\LogicalDisk(_Total)\% Free Space' -SampleInterval 2 -MaxSamples 2 | Select-Object -ExpandProperty CounterSamples | Measure-Object -Property CookedValue -Average).Average
+        Write-Output "Disk Utilization: Free Space $diskFree%"
+      register: disk_result
+
+    - name: Display Disk Utilization
+      debug:
+        msg: "{{ disk_result.stdout_lines | first }}"
